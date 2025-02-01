@@ -148,7 +148,7 @@ helper.force_arm()
 helper.set_mode('STABILIZE')
 
 # Set servo 1 to PWM value 1500 (neutral position for most servos)
-helper.set_servo(1, 1500)
+helper.set_servo(6, 1500)
 
 # Disarm the drone
 helper.disarm()
