@@ -1,8 +1,9 @@
+import time
 from pymavlink import mavutil
 
 class PyMavlinkHelper:
     def __init__(self, connection_string: str):
-        self.vehicle = mavutil.mavlink_connection(connection_string,baud=57600)
+        self.vehicle = mavutil.mavlink_connection(connection_string, baud=57600)
         self.vehicle.wait_heartbeat()
 
     def force_arm(self) -> None:
@@ -127,6 +128,21 @@ class PyMavlinkHelper:
         )
         
         print(f"Setting servo {servo_id} to PWM {pwm_value}")
+        
+        # Wait for 3 seconds before releasing the servo
+        time.sleep(3)  # Hold the servo at the given PWM value for 3 seconds
+        
+        # Optionally, you can set the PWM value back to a neutral position after 3 seconds
+        self.vehicle.mav.command_long_send(
+            self.vehicle.target_system,
+            self.vehicle.target_component,
+            mavutil.mavlink.MAV_CMD_DO_SET_SERVO,
+            0,  # Confirmation
+            servo_id,  # Servo number
+            1500,  # Neutral position (usually around 1500 for many servos)
+            0, 0, 0, 0, 0  # Unused parameters
+        )
+        print(f"Setting servo {servo_id} back to neutral position after 3 seconds.")
 
 # Helper function to handle receiving MAVLink messages
 def try_recv_match(vehicle, message_name: str):
@@ -143,12 +159,13 @@ helper = PyMavlinkHelper('/dev/serial0')  # Replace with correct connection stri
 
 # Force arm the drone
 helper.force_arm()
+time.sleep(0.5)
 
-# Set mode to GUIDED
+# Set mode to STABILIZE
 helper.set_mode('STABILIZE')
-
-# Set servo 1 to PWM value 1500 (neutral position for most servos)
-helper.set_servo(6, 1500)
-
+time.sleep(1)
+# Set servo 6 to PWM value 1500 (neutral position) and hold for 3 seconds
+helper.set_servo(1, 1500)
+time.sleep(1)
 # Disarm the drone
 helper.disarm()
