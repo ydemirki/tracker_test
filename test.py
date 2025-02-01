@@ -5,15 +5,29 @@ class PyMavlinkHelper:
         self.vehicle = mavutil.mavlink_connection(connection_string)
         self.vehicle.wait_heartbeat()
 
-    def arm(self) -> None:
+    def force_arm(self) -> None:
         """
-        Arm the drone. This will send the ARMED command.
+        Force arm the drone. This will send the ARM command, bypassing the normal safety checks.
         """
         if self.vehicle.is_armable:
-            self.vehicle.arducopter_arm()  # This will arm the drone
-            print("Drone armed.")
+            # Send force arm command (MAV_CMD_COMPONENT_ARM_DISARM with arm=1)
+            self.vehicle.mav.command_long_send(
+                self.vehicle.target_system,
+                self.vehicle.target_component,
+                mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
+                0,  # Confirmation (0 means no confirmation required)
+                1,  # Arm the vehicle (0 = disarm, 1 = arm)
+                0,  # Unused parameters
+                0,  # Unused parameters
+                0,  # Unused parameters
+                0,  # Unused parameters
+                0,  # Unused parameters
+                0   # Unused parameters
+            )
+            print("Force arming drone.")
         else:
             print("Drone not armable.")
+
 
     def disarm(self) -> None:
         """
@@ -105,16 +119,13 @@ def try_recv_match(vehicle, message_name: str):
 
 
 # Example usage:
-helper = PyMavlinkHelper('udp:127.0.0.1:14551')
-
+helper = PyMavlinkHelper('/dev/serial0')  # for Raspberry Pi
 # Arm the drone
-helper.arm()
-
-# Set mode to GUIDED
 helper.set_mode('GUIDED')
+helper.force_arm()
 
 # Set servo 1 to PWM value 1500 (neutral position for most servos)
-helper.set_servo(1, 1500)
+helper.set_servo(6, 1500)
 
 # Disarm the drone
 helper.disarm()
